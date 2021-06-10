@@ -2,7 +2,7 @@
 #define __HEADER_P4__ 1
 
 struct ingress_metadata_t {
-    bit<32> nhop_ipv4;
+    bit<16> dport;
     bit<14> megakey;
 }
 

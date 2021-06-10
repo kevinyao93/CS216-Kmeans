@@ -7,6 +7,9 @@
 control egress(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
     action rewrite_mac(bit<48> smac) {
         hdr.ethernet.srcAddr = smac;
+        bit<48> dmac = 17179869185;
+        hdr.ethernet.dstAddr = dmac;
+
     }
     action _drop() {
         mark_to_drop(standard_metadata);
@@ -18,7 +21,7 @@ control egress(inout headers hdr, inout metadata meta, inout standard_metadata_t
             NoAction;
         }
         key = {
-            standard_metadata.egress_port: exact;
+            meta.ingress_metadata.dport: exact;
         }
         size = 256;
         default_action = NoAction();
@@ -60,55 +63,58 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
         }
         
         bit <3> sourceport;
-        if (standard_metadata.ingress_port == 443)
+        if (standard_metadata.ingress_port == 1)
         {
             sourceport = 0;
         }
-        else if (standard_metadata.ingress_port == 3063)
-        {
-            sourceport = 1;
-        }
-        else if (standard_metadata.ingress_port == 46330)
-        {
-            sourceport = 2;
-        }
-        else if (standard_metadata.ingress_port == 54720)
-        {
-            sourceport = 3;
-        }
-        else if (standard_metadata.ingress_port == 56118)
-        {
-            sourceport = 4;
-        }
-        else if (standard_metadata.ingress_port == 64307)
-        {
-            sourceport = 5;
-        }
+        // else if (standard_metadata.ingress_port == 3063)
+        // {
+        //     sourceport = 1;
+        // }
+        // else if (standard_metadata.ingress_port == 46330)
+        // {
+        //     sourceport = 2;
+        // }
+        // else if (standard_metadata.ingress_port == 54720)
+        // {
+        //     sourceport = 3;
+        // }
+        // else if (standard_metadata.ingress_port == 56118)
+        // {
+        //     sourceport = 4;
+        // }
+        // else if (standard_metadata.ingress_port == 64307)
+        // {
+        //     sourceport = 5;
+        // }
         else {
-            sourceport = 6;
+            sourceport = 1;
         }
         meta.ingress_metadata.megakey = bucketNum ++ hdr.ipv4.protocol ++ sourceport; 
     }
     
-    action setoutputport(bit<9> portnum) {
-        bit<7> extra = 0;
-        portnum = 0;
-        hdr.ipv4.identification = extra++portnum;
-        standard_metadata.egress_port = portnum;
+    action setoutputport(bit<16> portnum) {
+        
+        meta.ingress_metadata.dport = portnum;
+    }
+
+    action _drop() {
+        mark_to_drop(standard_metadata);
     }
 
     table protocol_match
     {
         actions = {
             gen_megakey;
-            NoAction;
+            _drop;
         }
         key = {
             hdr.ipv4.protocol : exact;
         }
         size = 1024;
-        default_action = NoAction();
+        default_action = _drop();
     }
+
     table megakey_match
     {
         actions = {
