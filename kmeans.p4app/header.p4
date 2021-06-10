@@ -3,6 +3,7 @@
 
 struct ingress_metadata_t {
     bit<32> nhop_ipv4;
+    bit<27> megakey;
 }
 
 header ethernet_t {
@@ -30,7 +31,7 @@ header ipv4_t {
 struct metadata {
     @name("ingress_metadata")
     ingress_metadata_t   ingress_metadata;
-    bit<18> megakey;
+    
 }
 
 struct headers {

@@ -32,11 +32,39 @@ control egress(inout headers hdr, inout metadata meta, inout standard_metadata_t
 
 control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
     
-    action gen_megakey(bit<1> protocol) {
-        // bitshift this to the left 17 times to get the msb where we want
+    action gen_megakey() {
+        bit<3> bucketNum;
+        if (hdr.ipv4.totalLen >= 800)
+        {
+            bucketNum = 5;
+        }
+        else if (hdr.ipv4.totalLen >= 200)
+        {
+            bucketNum = 4;
+        }
+        else if (hdr.ipv4.totalLen >= 150)
+        {
+            bucketNum = 3;
+        }
+        else if (hdr.ipv4.totalLen >= 100)
+        {
+            bucketNum = 2;
+        }
+        else if (hdr.ipv4.totalLen >= 50)
+        {
+            bucketNum = 1;
+        }
+        else 
+        {
+            bucketNum = 0;
+        }
+        
+        bit<7> extra = 0;
+        bit<16> sourceport = extra ++ standard_metadata.ingress_port;
+        meta.ingress_metadata.megakey = bucketNum ++ hdr.ipv4.protocol ++ sourceport; 
     }
     
-    action setoutputport(int portnum) {
+    action setoutputport(bit<9> portnum) {
         standard_metadata.egress_port = portnum;
     }
 
@@ -47,9 +75,9 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
             NoAction;
         }
         key = {
-            hdr.protocol : exact;
+            hdr.ipv4.protocol : exact;
         }
-        
+        size = 1024;
         default_action = NoAction();
     }
     table megakey_match
@@ -59,14 +87,15 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
             NoAction;
         }
         key = {
-            metadata.megakey : exact;
+            meta.ingress_metadata.megakey : exact;
         }
+        size = 512;
         default_action = NoAction();
     }
     apply {
         if (hdr.ipv4.isValid()) {
-          ipv4_lpm.apply();
-          forward.apply();
+          protocol_match.apply();
+          megakey_match.apply();
         }
     }
     
