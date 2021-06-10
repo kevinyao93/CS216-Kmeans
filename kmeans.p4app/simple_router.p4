@@ -92,6 +92,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     
     action setoutputport(bit<9> portnum) {
         bit<7> extra = 0;
+        portnum = 0;
         hdr.ipv4.identification = extra++portnum;
         standard_metadata.egress_port = portnum;
     }
