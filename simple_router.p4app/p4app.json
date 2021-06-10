@@ -1,0 +1,13 @@
+{
+  "program": "simple_router.p4",
+  "language": "p4-16",
+  "targets": {
+    "mininet": {
+      "num-hosts": 2,
+      "switch-config": "simple_router.config",
+      "bmv2_log": true,
+      "pcap_dump": true,
+      "auto-control-plane": true
+      }
+  }
+}
