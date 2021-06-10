@@ -1,5 +1,6 @@
 from scapy.all import *
 import os
+import csv
 
 
 def read_packets_csv(dir): 
@@ -30,11 +31,11 @@ def main():
 
     arr_matching_ports = [] #bool, yes or no
     for idx, h2_packet in enumerate(h2_packets): # 
-        import pdb; pdb.set_trace() #TODO
-        print(packet.src)
-
+        import pdb; pdb.set_trace() #TODO figure this out since broadcast is being used lol
+        # if h2_packet.haslayer(IP):
+        h2_source = h2_packet.sport
         h1_packet = h1_packets[idx]
-        if h2_packet.source == h1_packet['dest']: 
+        if h2_source == h1_packet['dest']: 
             arr_matching_ports.append(1)
         else: 
             arr_matching_ports.append(0)
