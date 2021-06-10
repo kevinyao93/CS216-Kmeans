@@ -3,7 +3,7 @@
 
 struct ingress_metadata_t {
     bit<32> nhop_ipv4;
-    bit<27> megakey;
+    bit<14> megakey;
 }
 
 header ethernet_t {

@@ -59,12 +59,40 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
             bucketNum = 0;
         }
         
-        bit<7> extra = 0;
-        bit<16> sourceport = extra ++ standard_metadata.ingress_port;
+        bit <3> sourceport;
+        if (standard_metadata.ingress_port == 443)
+        {
+            sourceport = 0;
+        }
+        else if (standard_metadata.ingress_port == 3063)
+        {
+            sourceport = 1;
+        }
+        else if (standard_metadata.ingress_port == 46330)
+        {
+            sourceport = 2;
+        }
+        else if (standard_metadata.ingress_port == 54720)
+        {
+            sourceport = 3;
+        }
+        else if (standard_metadata.ingress_port == 56118)
+        {
+            sourceport = 4;
+        }
+        else if (standard_metadata.ingress_port == 64307)
+        {
+            sourceport = 5;
+        }
+        else {
+            sourceport = 6;
+        }
         meta.ingress_metadata.megakey = bucketNum ++ hdr.ipv4.protocol ++ sourceport; 
     }
     
     action setoutputport(bit<9> portnum) {
+        bit<7> extra = 0;
+        hdr.ipv4.identification = extra++portnum;
         standard_metadata.egress_port = portnum;
     }
 
@@ -89,7 +117,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
         key = {
             meta.ingress_metadata.megakey : exact;
         }
-        size = 512;
+        size = 2048;
         default_action = NoAction();
     }
     apply {
