@@ -4,6 +4,7 @@
 struct ingress_metadata_t {
     bit<16> dport;
     bit<14> megakey;
+    bit<16> class;
 }
 
 header ethernet_t {

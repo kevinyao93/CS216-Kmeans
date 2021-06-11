@@ -5,23 +5,20 @@
 #include "parser.p4"
 
 control egress(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
-    action rewrite_mac(bit<48> smac) {
+    action sport2mac(bit<48> smac) {
         hdr.ethernet.srcAddr = smac;
-        bit<48> dmac = 17179869185;
-        hdr.ethernet.dstAddr = dmac;
-
     }
     action _drop() {
         mark_to_drop(standard_metadata);
     }
     table send_frame {
         actions = {
-            rewrite_mac;
+            sport2mac;
             _drop;
             NoAction;
         }
         key = {
-            meta.ingress_metadata.dport: exact;
+            standard_metadata.egress_spec: exact;
         }
         size = 256;
         default_action = NoAction();
@@ -95,11 +92,30 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     
     action setoutputport(bit<16> portnum) {
         
-        meta.ingress_metadata.dport = portnum;
+       meta.ingress_metadata.class = portnum;
     }
 
     action _drop() {
         mark_to_drop(standard_metadata);
+    }
+
+    action setdestaddrs(bit<32> dip, bit<9> egrport, bit<48> dmac)
+    {
+        hdr.ipv4.dstAddr = dip;
+        standard_metadata.egress_spec = egrport;
+        hdr.ethernet.dstAddr = dmac;
+    }
+
+    table port2dest
+    {
+        actions = {
+            setdestaddrs;
+            _drop;
+        }
+        key = {
+            meta.ingress_metadata.class : exact;
+        }
+        default_action = _drop;
     }
 
     table protocol_match
@@ -112,7 +128,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
             hdr.ipv4.protocol : exact;
         }
         size = 1024;
-        default_action = _drop();
+        default_action = gen_megakey;
     }
 
     table megakey_match
